@@ -66,7 +66,7 @@ Make sure you have the following installed:
 
 1. **Clone the Repository:**
    ```bash
-   git clone [<repository-url>](https://github.com/oussama1399/BookQuest)
+   git clone https://github.com/oussama1399/BookQuest
    cd projet
    ```
 
