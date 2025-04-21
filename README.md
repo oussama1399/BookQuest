@@ -1,7 +1,5 @@
-<<<<<<< HEAD
-# Syst-me-de-recommandation-des-livres
-=======
-# Book Recommendation System
+
+# Book Recommendation System : BookQuest
 
 This project is a book recommendation application built with a Flask & MongoDB backend and a React frontend.
 
@@ -68,7 +66,7 @@ Make sure you have the following installed:
 
 1. **Clone the Repository:**
    ```bash
-   git clone <repository-url>
+   git clone [<repository-url>](https://github.com/oussama1399/BookQuest)
    cd projet
    ```
 
