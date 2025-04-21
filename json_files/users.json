@@ -1,0 +1,15 @@
+[
+  {
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "password": "$2b$12$examplehashforpassword",
+    "registration_date": "2023-01-15T00:00:00Z"
+  },
+  {
+    "name": "Jane Smith",
+    "email": "jane.smith@example.com",
+    "password": "$2b$12$anotherhashforpassword",
+    "registration_date": "2023-02-10T00:00:00Z"
+  }
+  // ...existing 98 user items...
+]

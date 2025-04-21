@@ -1,0 +1,31 @@
+[
+  {
+    "user_email": "john.doe@example.com",
+    "book_title": "To Kill a Mockingbird",
+    "rating": 5,
+    "comment": "A masterpiece that captures the essence of human dignity.",
+    "review_date": "2023-03-01T12:00:00Z"
+  },
+  {
+    "user_email": "jane.smith@example.com",
+    "book_title": "1984",
+    "rating": 4,
+    "comment": "A chilling depiction of a dystopian future.",
+    "review_date": "2023-03-05T15:30:00Z"
+  },
+  {
+    "user_email": "user1@example.com",
+    "book_title": "Book Title 1",
+    "rating": 5,
+    "comment": "Great book!",
+    "review_date": "2023-03-01T12:00:00Z"
+  },
+  {
+    "user_email": "user2@example.com",
+    "book_title": "Book Title 2",
+    "rating": 4,
+    "comment": "Enjoyed reading.",
+    "review_date": "2023-03-05T15:30:00Z"
+  }
+  // ... 98 more review objects ...
+]
