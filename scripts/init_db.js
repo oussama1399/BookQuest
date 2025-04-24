@@ -14,14 +14,89 @@ const USERS_FILE = path.join(JSON_DIR, 'users.json');
 const BOOKS_FILE = path.join(JSON_DIR, 'books.json');
 const REVIEWS_FILE = path.join(JSON_DIR, 'reviews.json');
 
-// Helper function to read and parse JSON
+// Helper function to read and parse JSON with enhanced error handling
 function readJsonFile(filePath) {
     try {
         const data = fs.readFileSync(filePath, 'utf8');
-        return JSON.parse(data);
+        try {
+            return JSON.parse(data);
+        } catch (parseError) {
+            // Get line and column numbers from error message
+            const match = /position (\d+)(?:\s+\(line (\d+) column (\d+)\))?/.exec(parseError.message);
+            if (match) {
+                const position = parseInt(match[1], 10);
+                const line = match[2] ? parseInt(match[2], 10) : null;
+                const column = match[3] ? parseInt(match[3], 10) : null;
+                
+                const contextLines = 3;
+                const lines = data.split('\n');
+                
+                console.error('\nJSON SYNTAX ERROR DETAILS:');
+                console.error('-----------------------');
+                console.error(`Error in ${path.basename(filePath)} at ${line !== null ? `line ${line}, column ${column}` : `position ${position}`}`);
+                console.error(`Error message: ${parseError.message}`);
+                
+                if (line !== null) {
+                    console.error('\nRelevant code section:');
+                    const startLine = Math.max(1, line - contextLines);
+                    const endLine = Math.min(lines.length, line + contextLines);
+                    
+                    for (let i = startLine; i <= endLine; i++) {
+                        const lineContent = lines[i-1];
+                        console.error(`${i === line ? '>' : ' '} ${i}: ${lineContent}`);
+                        if (i === line && column !== null) {
+                            console.error(`${' '.repeat(column+3)}^-- Syntax error around here`);
+                        }
+                    }
+                    
+                    console.error('\nCommon JSON syntax errors:');
+                    console.error('1. Missing commas between array elements or object properties');
+                    console.error('2. Extra comma after the last element in an array or object');
+                    console.error('3. Unclosed brackets, braces, or quotes');
+                    console.error('4. Using single quotes instead of double quotes');
+                }
+            }
+            
+            throw parseError;
+        }
     } catch (error) {
         console.error(`Error reading or parsing JSON file ${filePath}:`, error);
-        throw error; // Re-throw to stop execution if a file is essential
+        throw error;
+    }
+}
+
+// Function to attempt to fix common JSON syntax errors
+function attemptToFixJsonFile(filePath) {
+    try {
+        console.log(`Attempting to fix JSON syntax in ${filePath}...`);
+        let content = fs.readFileSync(filePath, 'utf8');
+        
+        // Check if the file ends with a valid JSON structure
+        const lastNonWhitespace = content.trim().slice(-1);
+        if (lastNonWhitespace !== ']' && lastNonWhitespace !== '}') {
+            console.log('The JSON file does not end with a proper closing bracket/brace.');
+            return false;
+        }
+        
+        // The most common error is a trailing comma in objects or arrays
+        // Replace instances of ,] with ]
+        let fixedContent = content.replace(/,(\s*[\]}])/g, '$1');
+        // Replace instances of ,} with }
+        fixedContent = fixedContent.replace(/,(\s*})/g, '$1');
+        
+        // Check if our fix worked
+        try {
+            JSON.parse(fixedContent);
+            console.log('Successfully fixed JSON syntax. Saving changes...');
+            fs.writeFileSync(filePath, fixedContent, 'utf8');
+            return true;
+        } catch (e) {
+            console.log('Automatic fixing failed. Please check the file manually.');
+            return false;
+        }
+    } catch (error) {
+        console.error('Error while attempting to fix JSON file:', error);
+        return false;
     }
 }
 
@@ -43,7 +118,20 @@ async function initializeDatabase() {
         const userCount = await usersCollection.countDocuments();
         if (userCount === 0) {
             console.log('Users collection is empty. Initializing...');
-            const usersData = readJsonFile(USERS_FILE).slice(0, 20); // Take first 20
+            let usersData;
+            try {
+                usersData = readJsonFile(USERS_FILE).slice(0, 20); // Take first 20
+            } catch (error) {
+                console.log('Error parsing users.json. Attempting to fix...');
+                if (attemptToFixJsonFile(USERS_FILE)) {
+                    // Try again after fixing
+                    usersData = readJsonFile(USERS_FILE).slice(0, 20);
+                } else {
+                    console.error('Could not automatically fix the users.json file. Please correct it manually.');
+                    throw error;
+                }
+            }
+            
             const usersToInsert = await Promise.all(usersData.map(async (user) => ({
                 ...user,
                 password: await bcrypt.hash(user.password, SALT_ROUNDS), // Hash password

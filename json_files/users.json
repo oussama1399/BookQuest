@@ -1,15 +1,30 @@
 [
   {
-    "name": "John Doe",
     "email": "john.doe@example.com",
-    "password": "$2b$12$examplehashforpassword",
-    "registration_date": "2023-01-15T00:00:00Z"
+    "username": "johndoe",
+    "password": "password123",
+    "full_name": "John Doe",
+    "registration_date": "2023-01-15T08:30:00Z"
   },
   {
-    "name": "Jane Smith",
     "email": "jane.smith@example.com",
-    "password": "$2b$12$anotherhashforpassword",
-    "registration_date": "2023-02-10T00:00:00Z"
+    "username": "janesmith",
+    "password": "securepass456",
+    "full_name": "Jane Smith",
+    "registration_date": "2023-01-20T14:45:00Z"
+  },
+  {
+    "email": "user1@example.com",
+    "username": "user1",
+    "password": "pass1234",
+    "full_name": "Test User One",
+    "registration_date": "2023-02-01T09:15:00Z"
+  },
+  {
+    "email": "user2@example.com",
+    "username": "user2",
+    "password": "pass5678",
+    "full_name": "Test User Two",
+    "registration_date": "2023-02-05T11:20:00Z"
   }
-  // ...existing 98 user items...
 ]
