@@ -136,6 +136,32 @@ def get_user(user_id):
         print(f"Get user error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+# Get reviews for a user
+@app.route('/api/users/<user_id>/reviews', methods=['GET'])
+def get_user_reviews(user_id):
+    try:
+        from bson.errors import InvalidId
+        user_obj_id = ObjectId(user_id)
+    except InvalidId:
+        return jsonify({'error': 'Invalid user ID format'}), 400
+    reviews = list(db.reviews.find({'user_id': user_obj_id}))
+    result = []
+    for rev in reviews:
+        book = db.books.find_one({'_id': rev['book_id']})
+        result.append({
+            'review_id': str(rev['_id']),
+            'book_id': str(rev['book_id']),
+            'rating': rev['rating'],
+            'comment': rev.get('comment', ''),
+            'created_at': rev.get('created_at').isoformat() if rev.get('created_at') else None,
+            'book': {
+                'title': book.get('title') if book else None,
+                'author': book.get('author') if book else None,
+                'cover_url': book.get('cover_url') if book else None
+            }
+        })
+    return jsonify(result), 200
+
 # Get all books with optional filtering
 @app.route('/api/books', methods=['GET'])
 def get_books():
@@ -205,7 +231,7 @@ def get_book(book_id):
                 'rating': 1,
                 'comment': 1,
                 'created_at': 1,
-                'user_name': {'$ifNull': ['$user.username', 'Anonymous']}
+                'user_name': {'$ifNull': ['$user.name', 'Anonymous']}
             }}
         ]))
         
@@ -318,7 +344,7 @@ def get_book_reviews(book_id):
             
             # Get username
             user = db.users.find_one({'_id': ObjectId(review['user_id'])})
-            review['username'] = user['username'] if user else 'Anonymous'
+            review['username'] = user['name'] if user else 'Anonymous'
             
             # Format datetime
             if 'created_at' in review:

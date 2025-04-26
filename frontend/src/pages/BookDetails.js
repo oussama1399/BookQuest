@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Container, Typography, Paper, Rating, Button, TextField, Box, CircularProgress, Divider, Avatar, Alert, Chip } from '@mui/material';
-import api from '../services/api';
+import { booksAPI, api } from '../services/api';
 
 function BookDetails() {
   const { id } = useParams();
@@ -28,14 +28,31 @@ function BookDetails() {
         }
 
         console.log('Fetching book details for ID:', id);
-        const data = await api.getBook(id);
-        console.log('Fetched book details:', data);
+        const response = await booksAPI.getBook(id);
+        console.log('Fetched book details:', response);
         
-        if (!data) {
+        // Debug the book and review data structure
+        if (response && response.data) {
+          console.log('Book data:', response.data);
+          if (response.data.reviews) {
+            console.log('Reviews data:', response.data.reviews);
+            response.data.reviews.forEach((review, index) => {
+              console.log(`Review ${index} structure:`, review);
+              console.log(`Review ${index} user info:`, {
+                user_id: review.user_id,
+                user_name: review.user_name,
+                username: review.username,
+                timestamp: review.created_at || review.date || review.timestamp || review.review_date
+              });
+            });
+          }
+        }
+        
+        if (!response || !response.data) {
           throw new Error('No book data received');
         }
         
-        setBook(data);
+        setBook(response.data);
       } catch (err) {
         console.error('Error fetching book details:', err);
         setError(err.message || 'Failed to load book details. Please try again later.');
@@ -61,22 +78,39 @@ function BookDetails() {
         return;
       }
       
-      await api.submitReview({
-        user_id: currentUser._id, // Fixed user_id reference
+      // Debug the user object structure to find the correct id field
+      console.log('Current user data:', currentUser);
+      
+      // Extract user_id - handle different possible structures from the backend
+      const userId = currentUser.user_id || currentUser._id || currentUser.id;
+      
+      if (!userId) {
+        console.error('Could not find user ID in current user data:', currentUser);
+        setError('User ID not found. Please log out and log in again.');
+        return;
+      }
+      
+      await booksAPI.submitReview({
+        user_id: userId,
         book_id: id,
         rating: newReview.rating,
         comment: newReview.comment
       });
       
       // Refresh book data to include the new review
-      const updatedBook = await api.getBook(id);
-      setBook(updatedBook);
+      const updatedResponse = await booksAPI.getBook(id);
+      if (updatedResponse && updatedResponse.data) {
+        setBook(updatedResponse.data);
+      }
       
       // Reset form
       setNewReview({ rating: 0, comment: '' });
       setError('');
     } catch (error) {
+      // More detailed error logging
       console.error('Failed to submit review:', error);
+      console.error('Response data:', error.response?.data);
+      
       setError('Failed to submit review. Please try again later.');
     }
   };
@@ -132,22 +166,33 @@ function BookDetails() {
         <Typography variant="h5" sx={{ mb: 2 }}>Reviews</Typography>
         
         {book.reviews && book.reviews.length > 0 ? (
-          book.reviews.map((review, index) => (
-            <Box key={index} sx={{ mb: 2 }}>
-              {index > 0 && <Divider sx={{ my: 2 }} />}
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <Avatar sx={{ mr: 2 }}>{review.user_name?.charAt(0) || '?'}</Avatar>
-                <Box>
-                  <Typography variant="subtitle1">{review.user_name || 'Anonymous'}</Typography>
-                  <Rating value={review.rating} readOnly size="small" />
+          book.reviews.map((review, index) => {
+            // Always show the name of the user who wrote the review
+            const reviewAuthorName = review.user_name || review.username || (review.user && review.user.name) || 'Anonymous';
+            
+            // For date, try various possible properties or use today's date
+            const reviewDate = review.created_at || review.date || review.timestamp || review.review_date || new Date();
+            
+            // Log the review data to debug the reviewer name issue
+            console.log('Review data:', review, 'Author name being used:', reviewAuthorName);
+            
+            return (
+              <Box key={index} sx={{ mb: 2 }}>
+                {index > 0 && <Divider sx={{ my: 2 }} />}
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <Avatar sx={{ mr: 2 }}>{reviewAuthorName.charAt(0) || '?'}</Avatar>
+                  <Box>
+                    <Typography variant="subtitle1">{reviewAuthorName}</Typography>
+                    <Rating value={review.rating} readOnly size="small" />
+                  </Box>
                 </Box>
+                <Typography variant="body1">{review.comment || 'No comment provided.'}</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {new Date(reviewDate).toLocaleDateString()}
+                </Typography>
               </Box>
-              <Typography variant="body1">{review.comment || 'No comment provided.'}</Typography>
-              <Typography variant="caption" color="text.secondary">
-                {review.review_date ? new Date(review.review_date).toLocaleDateString() : 'Unknown date'}
-              </Typography>
-            </Box>
-          ))
+            );
+          })
         ) : (
           <Typography>No reviews yet. Be the first to review!</Typography>
         )}

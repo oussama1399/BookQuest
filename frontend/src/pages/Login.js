@@ -1,128 +1,115 @@
-import { useState } from 'react';
-import { Container, Paper, TextField, Button, Typography, Alert, Snackbar, InputAdornment, IconButton } from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { useNavigate, Link } from 'react-router-dom';
-import api from '../services/api';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { authAPI } from '../services/api';
+import { 
+  Container, Box, Typography, TextField, Button, 
+  Paper, Alert, CircularProgress
+} from '@mui/material';
 
-function Login() {
-  const [formData, setFormData] = useState({ email: '', password: '' });
-  const [formErrors, setFormErrors] = useState({});
-  const [loading, setLoading] = useState(false);
+const Login = () => {
+  const [credentials, setCredentials] = useState({
+    email: '',
+    password: '',
+  });
   const [error, setError] = useState('');
-  const [open, setOpen] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const validateForm = () => {
-    const errors = {};
-    if (!formData.email) errors.email = 'Email is required';
-    if (!formData.password) errors.password = 'Password is required';
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setCredentials({
+      ...credentials,
+      [name]: value,
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("handleSubmit called");
-    if (!validateForm()) {
-      console.log("Validation failed", formErrors);
-      return;
-    }
+    setLoading(true);
+    setError('');
+
     try {
-      setLoading(true);
-      setError(''); // Clear previous errors
+      const response = await authAPI.login(credentials);
+      console.log('Login successful', response.data);
       
-      // Check server health first
-      try {
-        await api.checkServerHealth();
-        console.log("Server health check passed");
-      } catch (healthError) {
-        throw { error: "Cannot connect to server. Please check if the backend is running." };
-      }
+      // Store user data in localStorage or state management
+      localStorage.setItem('user', JSON.stringify(response.data));
       
-      console.log('Submitting login for:', formData.email);
-      const response = await api.login(formData);
-      console.log('Login response', response);
-      setOpen(true);
-      
-      // Redirect to home page after successful login
-      setTimeout(() => {
-        navigate('/');
-      }, 1500);
-    } catch (error) {
-      console.error("Login error", error);
-      setError(error?.error || error?.message || 'An error occurred during login');
+      // Redirect to home page
+      navigate('/');
+    } catch (err) {
+      console.error('Login error:', err);
+      setError(
+        err.response?.data?.error || 
+        'Login failed. Please check your credentials and try again.'
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const handleClose = (event, reason) => {
-    if (reason === 'clickaway') {
-      return;
-    }
-    setOpen(false);
-  };
-
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-
   return (
     <Container maxWidth="sm">
-      <Paper sx={{ p: 3, mt: 4 }}>
-        <Typography variant="h4" sx={{ mb: 3 }}>Login</Typography>
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-        <form onSubmit={handleSubmit}>
-          <TextField
-            fullWidth
-            label="Email"
-            type="email"
-            value={formData.email}
-            onChange={(e) => setFormData({...formData, email: e.target.value})}
-            error={!!formErrors.email}
-            helperText={formErrors.email || ''}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            label="Password"
-            type={showPassword ? 'text' : 'password'}
-            value={formData.password}
-            onChange={(e) => setFormData({...formData, password: e.target.value})}
-            error={!!formErrors.password}
-            helperText={formErrors.password || ''}
-            sx={{ mb: 2 }}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton onClick={togglePasswordVisibility} edge="end">
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              )
-            }}
-          />
-          <Button 
-            fullWidth 
-            variant="contained" 
-            type="submit" 
-            disabled={loading}
-          >
-            {loading ? 'Logging in...' : 'Login'}
-          </Button>
-        </form>
-        <Typography sx={{ mt: 2, textAlign: 'center' }}>
-          Don't have an account? <Link to="/register">Register</Link>
-        </Typography>
-      </Paper>
-      <Snackbar open={open} autoHideDuration={4000} onClose={handleClose}>
-        <Alert onClose={handleClose} severity="success" sx={{ width: '100%' }}>
-          Login successful!
-        </Alert>
-      </Snackbar>
+      <Box sx={{ mt: 8, mb: 4 }}>
+        <Paper elevation={3} sx={{ p: 4 }}>
+          <Typography variant="h4" component="h1" align="center" gutterBottom>
+            Login to BookQuest
+          </Typography>
+          
+          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          
+          <form onSubmit={handleSubmit}>
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="email"
+              label="Email Address"
+              name="email"
+              autoComplete="email"
+              autoFocus
+              value={credentials.email}
+              onChange={handleChange}
+            />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              name="password"
+              label="Password"
+              type="password"
+              id="password"
+              autoComplete="current-password"
+              value={credentials.password}
+              onChange={handleChange}
+            />
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ mt: 3, mb: 2 }}
+              disabled={loading}
+            >
+              {loading ? <CircularProgress size={24} /> : 'Login'}
+            </Button>
+          </form>
+          
+          <Box sx={{ mt: 2, textAlign: 'center' }}>
+            <Typography variant="body2">
+              Don't have an account?{' '}
+              <Button 
+                variant="text" 
+                onClick={() => navigate('/register')}
+                sx={{ p: 0, minWidth: 'auto', verticalAlign: 'baseline' }}
+              >
+                Register
+              </Button>
+            </Typography>
+          </Box>
+        </Paper>
+      </Box>
     </Container>
   );
-}
+};
 
 export default Login;

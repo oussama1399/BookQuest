@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Container, Paper, TextField, Button, Typography, Alert, Snackbar, InputAdornment, IconButton } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useNavigate, Link } from 'react-router-dom';
-import api from '../services/api';
+import { authAPI } from '../services/api';
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -45,7 +45,7 @@ function Register() {
         password: formData.password
       };
       
-      const response = await api.register(userData);
+      const response = await authAPI.register(userData);
       setOpen(true);
       // Redirect to home page after successful registration
       setTimeout(() => {

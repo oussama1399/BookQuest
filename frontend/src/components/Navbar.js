@@ -9,7 +9,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import ExploreIcon from '@mui/icons-material/Explore';
 import LogoutIcon from '@mui/icons-material/Logout';
-import api from '../services/api';
+import { api, authAPI } from '../services/api';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -17,7 +17,9 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      await api.logout();
+      await authAPI.logout();
+      // Clear user data from localStorage
+      localStorage.removeItem('user');
       navigate('/login'); // Redirect to login page after logout
     } catch (error) {
       console.error('Logout failed', error);

@@ -1,99 +1,56 @@
 import axios from 'axios';
 
+// API base URL - make sure this matches your backend
+const API_URL = 'http://localhost:5000';
+
+// Create axios instance with default config
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
-  withCredentials: true
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  withCredentials: true, // Important for cookies/sessions
 });
 
-// User management
-function getCurrentUser() {
-  return JSON.parse(localStorage.getItem('currentUser') || "null");
-}
-
-function setCurrentUser(user) {
-  localStorage.setItem('currentUser', JSON.stringify(user));
-}
-
-function clearCurrentUser() {
-  localStorage.removeItem('currentUser');
-}
-
-// Authentication
-async function register(userData) {
-  const response = await api.post('/auth/register', userData);
-  return response.data;
-}
-
-async function login(credentials) {
-  // Try sending both email and username if unsure
-  const payload = {
-    email: credentials.email,
-    username: credentials.email, // fallback if backend expects username
-    password: credentials.password,
-  };
+api.getCurrentUser = () => {
   try {
-    const response = await axios.post('/api/auth/login', payload, { withCredentials: true });
-    setCurrentUser(response.data);
-    return response.data;
+    const user = localStorage.getItem('user');
+    return user ? JSON.parse(user) : null;
   } catch (error) {
-    if (error.response && error.response.status === 401) {
-      throw new Error('Invalid credentials. Please check your email and password.');
-    }
-    throw error;
+    console.error('Failed to parse user data from localStorage:', error);
+    return null;
   }
-}
-
-async function logout() {
-  await api.post('/auth/logout');
-  clearCurrentUser();
-}
-
-async function checkUsername(username) {
-  const response = await api.get(`/auth/check-username/${username}`);
-  return response.data;
-}
-
-// Server health check
-async function checkServerHealth() {
-  const response = await api.get('/health');
-  return response.data;
-}
-
-// Books
-async function getBooks(params = {}) {
-  const response = await api.get('/books', { params });
-  return response.data;
-}
-
-async function getBook(id) {
-  const response = await api.get(`/books/${id}`);
-  return response.data;
-}
-
-// Reviews
-async function getBookReviews(bookId) {
-  const response = await api.get(`/books/${bookId}/reviews`);
-  return response.data;
-}
-
-async function submitReview(reviewData) {
-  const response = await api.post('/reviews', reviewData);
-  return response.data;
-}
-
-// Export all functions
-export default {
-  api,
-  getCurrentUser,
-  setCurrentUser,
-  clearCurrentUser,
-  register,
-  login,
-  logout,
-  checkUsername,
-  getBooks,
-  getBook,
-  getBookReviews,
-  submitReview,
-  checkServerHealth
 };
+
+// Auth API services
+const authAPI = {
+  // Register new user
+  register: (userData) => api.post('/api/auth/register', userData),
+  
+  // Login user
+  login: (credentials) => api.post('/api/auth/login', credentials),
+  
+  // Logout user
+  logout: () => api.post('/api/auth/logout'),
+  
+  // Get current user profile
+  getProfile: (userId) => api.get(`/api/users/${userId}`),
+  getUserReviews: (userId) => api.get(`/api/users/${userId}/reviews`)
+};
+
+// Books API services
+const booksAPI = {
+  // Get all books with optional filters
+  getBooks: (params) => api.get('/api/books', { params }),
+  
+  // Get a specific book by ID
+  getBook: (bookId) => api.get(`/api/books/${bookId}`),
+  
+  // Get reviews for a specific book
+  getBookReviews: (bookId) => api.get(`/api/books/${bookId}/reviews`),
+  
+  // Submit a review
+  submitReview: (reviewData) => api.post('/api/reviews', reviewData)
+};
+
+export { authAPI, booksAPI, api };

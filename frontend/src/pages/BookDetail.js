@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Container, Typography, Paper, Rating, Button, TextField, Box, CircularProgress, Divider, Avatar } from '@mui/material';
-import api from '../services/api';
+import { booksAPI } from '../services/api';
 
 function BookDetail() {
   const { id } = useParams();
@@ -14,7 +14,7 @@ function BookDetail() {
     const fetchBookDetails = async () => {
       try {
         setLoading(true);
-        const bookData = await api.getBook(id); // Corrected method name
+        const bookData = await booksAPI.getBook(id);
         setBook(bookData);
       } catch (error) {
         console.error('Failed to fetch book details:', error);
@@ -42,7 +42,7 @@ function BookDetail() {
       });
       
       // Refresh book data to include the new review using correct API method
-      const updatedBook = await api.getBook(id); // Changed from api.getBookById
+      const updatedBook = await booksAPI.getBook(id); // Changed from api.getBookById
       setBook(updatedBook);
       
       // Reset form
@@ -84,32 +84,6 @@ function BookDetail() {
         <Typography>Genre: {book.genre.join(', ')}</Typography>
         <Typography>Published: {book.publication_year}</Typography>
         <Typography variant="body1" sx={{ mt: 2 }}>{book.description}</Typography>
-      </Paper>
-
-      {/* Reviews section */}
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h5" sx={{ mb: 2 }}>Reviews</Typography>
-        
-        {book.reviews && book.reviews.length > 0 ? (
-          book.reviews.map((review, index) => (
-            <Box key={index} sx={{ mb: 2 }}>
-              {index > 0 && <Divider sx={{ my: 2 }} />}
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <Avatar sx={{ mr: 2 }}>{review.user_name?.charAt(0) || '?'}</Avatar>
-                <Box>
-                  <Typography variant="subtitle1">{review.user_name}</Typography>
-                  <Rating value={review.rating} readOnly size="small" />
-                </Box>
-              </Box>
-              <Typography variant="body1">{review.comment}</Typography>
-              <Typography variant="caption" color="text.secondary">
-                {new Date(review.review_date).toLocaleDateString()}
-              </Typography>
-            </Box>
-          ))
-        ) : (
-          <Typography>No reviews yet. Be the first to review!</Typography>
-        )}
       </Paper>
 
       {/* Add review section */}

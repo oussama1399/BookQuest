@@ -1,134 +1,143 @@
-
-# Book Recommendation System : BookQuest
-
-This project is a book recommendation application built with a Flask & MongoDB backend and a React frontend.
+# BookQuest - Book Recommendation System
 
 ## Overview
 
-The project is split into three main parts:
-- **Backend** – A Flask REST API that handles user authentication, book retrieval, and review submission.
-- **Frontend** – A React application using Material‑UI (MUI) components for an interactive user interface.
-- **Database Initialization** – A Node.js script that seeds MongoDB with initial data from JSON files.
+BookQuest is a full-stack web application that helps users discover, explore, review, and receive personalized recommendations for books. Built with a modern client-server architecture, it combines a React-based frontend with a Flask/MongoDB backend to deliver a responsive, secure, and scalable user experience.
 
-## Recent Updates
-
-- **Frontend Improvements:**
-  - Fixed repeatedly occurring errors with the Material‑UI `Button` component by adjusting the import statements in various components (e.g. Navbar, BookCard, and pages).
-  - Enhanced theme and styling using a custom `theme.js` and global styles in `index.css`.
-  - Updated routing structure in `App.js` to support new pages such as `BookDetails`, `Explore`, and `Profile`.
-  - Enhanced component interactivity in `Navbar.js` with proper user state handling and redirection after actions (login, logout, registration).
-
-- **Backend Enhancements:**
-  - Improved user registration and login endpoints:
-    - Registration now saves the user's name, email, and hashed password.
-    - Login endpoint searches by email (or username, if provided) and returns complete user details.
-  - Added review submission functionality with proper ObjectId mapping and average rating updates.
-  - Introduced robust error handling and logging in API routes.
-  - Updated the health check endpoint to confirm an active connection with MongoDB.
-
-- **Database Initialization:**
-  - The database initialization script (`scripts/init_db.js`) now reads JSON files for users, books, and reviews, converts dates correctly, and hashes user passwords using bcrypt.
-  - Reviews are now linked to users and books via ObjectIds; missing references are logged and skipped.
-
+---
 ## Project Structure
 
-- **/backend**  
-  - `app.py`: Main API routes including book retrieval, user management, and review submissions.
-  - `config.py`: Configuration settings including MongoDB URI and secret keys.
-  - `requirements.txt`: Python dependencies used by the backend.
-  - `init_db.js`: Node.js script to initialize and seed the MongoDB database.
+- **frontend/**: React application source
+  - **src/**: Components, pages, services, and theme
+  - **public/**: Static assets (HTML, manifest)
+- **backend/**: Flask API server
+  - **app.py**: Endpoints and main application logic
+  - **config.py**: Configuration for database and security
+  - **requirements.txt**: Python dependencies
+- **config/**: Shared configuration (e.g., database connection helper)
+- **json_files/**: Sample data for books, reviews, users (for development)
+- **scripts/**: Utility scripts (e.g., database initialization)
+- **ABOUT.md**: Project description and implementation details
+- **README.md**: Setup instructions and usage guide
 
-- **/json_files**  
-  Contains JSON data files to be imported into the database:
-  - `books.json`
-  - `users.json`
-  - `reviews.json`
+---
+## Core Functionalities
 
-- **/frontend**  
-  Contains the React application:
-  - `src/`: Source code with pages, components, services (e.g., API functions in `api.js`), and theme customization (`theme.js`).
-  - `public/`: Public assets, including `index.html` and `manifest.json`.
-  - `package.json`: Lists React dependencies and build scripts.
+### User Authentication
 
-- **Root Files**  
-  Includes overall configurations such as the root `package.json` for backend dependencies (e.g., MongoDB and bcrypt).
+- **Register**: Users create accounts with name, email, and password. Passwords are hashed using Werkzeug’s `generate_password_hash` and stored securely.
+- **Login**: Secure login with email/password, validated against hashed passwords. Successful login creates a Flask session cookie.
+- **Logout**: Clears session cookie, ending the authenticated session.
+- **Session Management**: Server-side sessions via Flask’s session object. Protected endpoints enforce login.
 
-## Setup and Deployment
+### Browse & Search Books
 
-### Prerequisites
+- **Home Page**: Showcase of popular or recently added books with quick-access cards.
+- **Explore Page**: Full catalog browsing with live search (title/author keywords) and genre filtering.
+- **Responsive Layout**: Adapts to various screen sizes, providing optimal grid columns.
 
-Make sure you have the following installed:
-- **MongoDB** (running at `mongodb://localhost:27017/`)
-- **Node.js and npm**
-- **Python (version 3.8 or later)**
+### Book Details & Reviews
 
-### Installation Steps
+- **Detail View**: Displays comprehensive metadata (title, author, genres, publication year, description).
+- **Reviews Section**: Lists all user reviews with reviewer names, star ratings, comments, and timestamps.
+- **Add / Update Review**: Authenticated users can submit or edit reviews; average rating updates in real time.
 
-1. **Clone the Repository:**
-   ```bash
-   git clone https://github.com/oussama1399/BookQuest
-   cd projet
-   ```
+### Personalized Recommendations
 
-2. **Backend Setup:**
-   - Navigate to the `backend` directory:
-     ```bash
-     cd backend
-     ```
-   - (Optional) Create a Python virtual environment:
-     ```bash
-     python -m venv venv
-     source venv/bin/activate   # Unix/macOS
-     venv\Scripts\activate      # Windows
-     ```
-   - Install dependencies:
-     ```bash
-     pip install -r requirements.txt
-     ```
-   - Start the Flask server:
-     ```bash
-     python app.py
-     ```
-   - The backend API will run on `http://localhost:5000`.
+- **Content-Based Filtering**: Computes genre and author similarity using TF-IDF in Python.
+- **Collaborative Filtering**: Calculates user-user similarity on rating matrix using cosine similarity.
+- **Hybrid Engine**: Blends content and collaborative scores to generate top‑N recommended books.
 
-3. **Database Initialization:**
-   - From the project root, run the initialization script:
-     ```bash
-     node scripts/init_db.js
-     ```
-   - This will seed the `BookRecDB` with initial users, books, and reviews.
+### Review Management
 
-4. **Frontend Setup:**
-   - Navigate to the `frontend` directory:
-     ```bash
-     cd frontend
-     ```
-   - Install Node.js dependencies:
-     ```bash
-     npm install
-     ```
-   - Start the React development server:
-     ```bash
-     npm start
-     ```
-   - The React app will run on `http://localhost:3000`.
+- **Edit / Delete**: Users can modify or remove their reviews; backend enforces ownership checks.
+- **Review History**: Chronological log of user reviews is displayed on the Profile page.
 
-## Summary of Functionality
+### User Profiles
 
-- **User Management:**  
-  - Registration (`/api/auth/register`) saves full user information.
-  - Login (`/api/auth/login`) supports authentication with email (or username) and returns user details.
-  - Logout (`/api/auth/logout`) clears the session.
+- **Profile Dashboard**: Shows personal info, review history (“Books I Reviewed”), and recommendations.
+- **Privacy Controls**: Option to mark profile public/private, controlling visibility of review history.
 
-- **Books and Reviews:**  
-  - Retrieve books (`/api/books`) with optional filtering (genre and search query).
-  - View book details including reviews (`/api/books/<book_id>`).
-  - Submit reviews (`/api/reviews`) which update the book's average rating.
+---
+## Technologies Used
 
-- **Health Check:**  
-  - A dedicated endpoint (`/api/health`) ensures the backend and MongoDB are operational.
+### Frontend
 
-## Running the Application
+- **React.js**: Builds dynamic, component-driven UI.
+- **Material-UI (MUI)**: Provides a consistent design system and responsive components.
+- **Axios**: HTTP client for API communication with `withCredentials`.
+- **React Router**: Manages client-side navigation in a single-page app.
+- **LocalStorage / Context**: Stores user session locally for state management.
 
-After completing the setup steps, you can access the application by visiting `http://localhost:3000` in your web browser.
->>>>>>> 99ae3fe (initial commit)
+### Backend
+
+- **Flask**: Lightweight Python framework for RESTful API.
+- **PyMongo**: MongoDB driver for Python; supports aggregation pipelines.
+- **Flask-CORS**: Enables cross-origin requests with session support.
+- **Werkzeug**: Provides secure password hashing utilities.
+
+### Database
+
+- **MongoDB**: Document-oriented NoSQL database for flexible schemas.
+  - **Collections**: `users`, `books`, `reviews`
+
+---
+## Database Schema
+
+### users
+- `_id`: ObjectId
+- `name`: string
+- `email`: string (unique)
+- `password_hash`: string
+- `created_at`: datetime
+
+### books
+- `_id`: ObjectId
+- `title`: string
+- `author`: string
+- `genre`: array of strings
+- `publication_year`: int
+- `description`: string
+
+### reviews
+- `_id`: ObjectId
+- `user_id`: ObjectId (ref `users`)
+- `book_id`: ObjectId (ref `books`)
+- `rating`: int (1–5)
+- `comment`: string
+- `created_at`: datetime
+
+---
+## Setup & Deployment
+
+### Clone Repository
+
+```bash
+git clone https://github.com/yourusername/bookquest.git
+cd bookquest
+```
+
+### Backend Setup
+
+```bash
+cd backend
+python -m venv venv          # Optional virtual env
+source venv/bin/activate     # macOS/Linux
+venv\Scripts\activate      # Windows
+pip install -r requirements.txt
+flask run --port=5000        # Launch API server
+```
+
+### Seed Database
+
+```bash
+node scripts/init_db.js      # Populate MongoDB with sample data
+```
+
+### Frontend Setup
+
+```bash
+cd frontend
+npm install
+npm start                    # Launch React app at http://localhost:3000
+```

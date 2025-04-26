@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Container, TextField, Grid, FormControl, InputLabel, Select, MenuItem, Typography, Box, Button, CircularProgress } from '@mui/material';
 import BookCard from '../components/BookCard';
-import api from '../services/api';
+import { booksAPI } from '../services/api';
 
 function Explore() {
   const location = useLocation();
@@ -28,11 +28,21 @@ function Explore() {
           params.genre = genre;
         }
         
-        const data = await api.getBooks(params);
-        setBooks(data);
+        const response = await booksAPI.getBooks(params);
+        console.log('Explore books API response:', response);
+        
+        // Always initialize books as an array even when the response is unexpected
+        if (response && response.data && Array.isArray(response.data)) {
+          setBooks(response.data);
+        } else {
+          console.error('Expected an array in response.data but got:', response);
+          setError('Unexpected response format from the server.');
+          setBooks([]); // Ensure books is an empty array, not undefined or null
+        }
       } catch (error) {
         console.error('Failed to fetch books:', error);
         setError('Failed to load books. Please try again.');
+        setBooks([]); // Set empty array to avoid "map is not a function" error
       } finally {
         setLoading(false);
       }
@@ -96,23 +106,23 @@ function Explore() {
           </Box>
         ) : error ? (
           <Typography color="error">{error}</Typography>
-        ) : books.length === 0 ? (
-          <Typography>No books found matching your criteria.</Typography>
-        ) : (
+        ) : Array.isArray(books) && books.length > 0 ? (
           <Grid container spacing={3}>
             {books.map((book) => (
-              <Grid item xs={12} sm={6} md={4} key={book._id}>
+              <Grid item xs={12} sm={6} md={4} key={book._id || `book-${Math.random()}`}>
                 <BookCard book={{
                   id: book._id,
-                  title: book.title,
-                  author: book.author,
-                  genre: book.genre,
-                  publication_year: book.publication_year,
-                  description: book.description
+                  title: book.title || 'Untitled',
+                  author: book.author || 'Unknown Author',
+                  genre: Array.isArray(book.genre) ? book.genre : ['Unknown'],
+                  publication_year: book.publication_year || '',
+                  description: book.description || 'No description available'
                 }} />
               </Grid>
             ))}
           </Grid>
+        ) : (
+          <Typography>No books found matching your criteria.</Typography>
         )}
       </Box>
     </Container>

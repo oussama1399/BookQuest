@@ -3,7 +3,7 @@ import { Container, Typography, Grid, TextField, Box, Button, CircularProgress }
 import SearchIcon from '@mui/icons-material/Search';
 import BookCard from '../components/BookCard';
 import { useNavigate } from 'react-router-dom';
-import api from '../services/api';
+import { booksAPI } from '../services/api';
 
 function Home() {
   const [popularBooks, setPopularBooks] = useState([]);
@@ -17,8 +17,14 @@ function Home() {
     const fetchBooks = async () => {
       try {
         setLoading(true);
-        const data = await api.getBooks();
-        setPopularBooks(data);
+        const response = await booksAPI.getBooks();
+        console.log('API response for getBooks:', response);
+        if (Array.isArray(response.data)) {
+          setPopularBooks(response.data);
+        } else {
+          console.error('Expected an array but got:', response);
+          setError('Unexpected response format from the server.');
+        }
       } catch (error) {
         console.error('Failed to fetch books:', error);
         setError('Failed to load books. Please try again.');
