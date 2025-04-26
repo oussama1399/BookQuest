@@ -356,6 +356,56 @@ def get_book_reviews(book_id):
         print(f"Error getting book reviews: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+# --- Collaborative Filtering Functions and Endpoint ---
+def recommend_books_for_user(user_id, num_recs=5):
+    # Simple genre-based recommendation: find user's favorite genres and suggest books from those
+    try:
+        user_obj = ObjectId(user_id)
+    except:
+        return []
+    # Get user's high-rated reviews (4 or 5 stars)
+    user_reviews = list(db.reviews.find({'user_id': user_obj, 'rating': {'$gte': 4}}))
+    if not user_reviews:
+        return []
+    # Count genre occurrences
+    genre_count = {}
+    for rev in user_reviews:
+        book = db.books.find_one({'_id': rev['book_id']})
+        if book and isinstance(book.get('genre'), list):
+            for g in book['genre']:
+                genre_count[g] = genre_count.get(g, 0) + 1
+    if not genre_count:
+        return []
+    # Sort genres by preference
+    top_genres = sorted(genre_count, key=genre_count.get, reverse=True)
+    # Find books in top genres excluding ones already reviewed
+    reviewed_ids = {rev['book_id'] for rev in user_reviews}
+    recs = []
+    for genre in top_genres:
+        if len(recs) >= num_recs:
+            break
+        # Fetch candidate books
+        candidates = db.books.find({'genre': genre})
+        for book in candidates:
+            if book['_id'] in reviewed_ids:
+                continue
+            recs.append({
+                '_id': str(book['_id']),
+                'title': book.get('title'),
+                'author': book.get('author'),
+                'genre': book.get('genre'),
+                'publication_year': book.get('publication_year'),
+                'cover_url': book.get('cover_url')
+            })
+            if len(recs) >= num_recs:
+                break
+    return recs
+
+@app.route('/api/recommendations/user/<user_id>', methods=['GET'])
+def get_user_recommendations(user_id):
+    recs = recommend_books_for_user(user_id)
+    return jsonify(recs), 200
+
 # DEVELOPMENT ONLY - Delete all users (protect this in production!)
 @app.route('/api/dev/clear-users', methods=['POST'])
 def clear_users():

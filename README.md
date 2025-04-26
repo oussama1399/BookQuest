@@ -46,7 +46,10 @@ BookQuest is a full-stack web application that helps users discover, explore, re
 
 - **Content-Based Filtering**: Computes genre and author similarity using TF-IDF in Python.
 - **Collaborative Filtering**: Calculates user-user similarity on rating matrix using cosine similarity.
+- **User-Based Collaborative Filtering**: (New) A custom recommendation algorithm that builds a user-item rating matrix, computes cosine similarity between users, predicts unseen book ratings, and suggests top-ranked books.  
 - **Hybrid Engine**: Blends content and collaborative scores to generate top‑N recommended books.
+- **Genre Preference Engine**: (New) A straightforward recommendation algorithm that tallies the user's highly rated books (4–5 stars) by genre, identifies the user's favorite genres, and suggests books within those top genres.
+- **Hybrid Engine**: Combines content-based (TF-IDF) and genre-preference recommendations for a balanced suggestion list.
 
 ### Review Management
 
